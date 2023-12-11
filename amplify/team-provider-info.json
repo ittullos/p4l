@@ -1,0 +1,20 @@
+{
+  "staging": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-pastor4life-staging-03803-authRole",
+      "UnauthRoleArn": "arn:aws:iam::826335059257:role/amplify-pastor4life-staging-03803-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::826335059257:role/amplify-pastor4life-staging-03803-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-pastor4life-staging-03803-deployment",
+      "UnauthRoleName": "amplify-pastor4life-staging-03803-unauthRole",
+      "StackName": "amplify-pastor4life-staging-03803",
+      "StackId": "arn:aws:cloudformation:us-east-1:826335059257:stack/amplify-pastor4life-staging-03803/f86f8d10-4ddf-11ee-ae53-125832b6045b",
+      "AmplifyAppId": "d27ea9wt4fnqi4"
+    },
+    "categories": {
+      "auth": {
+        "Pastor4Life": {}
+      }
+    }
+  }
+}
