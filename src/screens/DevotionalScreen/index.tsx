@@ -1,1 +1,1 @@
-export { default } from './DevotionalScreen'
+export { default } from "./DevotionalScreen";
