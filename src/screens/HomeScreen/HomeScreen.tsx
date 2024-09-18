@@ -5,6 +5,7 @@ import {
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import React, { useEffect, useState, useRef, useContext } from "react";
 import { Auth } from "aws-amplify";
@@ -60,19 +61,43 @@ const HomeScreen = (props) => {
   }, []);
 
   const getVerse = () => {
-    axios
-      .post(`https://pastor4life.click/p4l/home`, {
-        userId: "isaac.tullos@gmail.com",
-      })
-      .then((res) => {
-        console.log("getVerse: ", res);
-        setVerse(res.data.verse);
-        setNotation(res.data.notation);
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
+    // Auth.currentSession().then((res) => {
+    //   let accessToken = res.getAccessToken();
+    //   let jwt = accessToken.getJwtToken();
+    //   axios
+    //     .get(`http://localhost:9292/home`, {
+    //       headers: { Authorization: `Bearer ${jwt}` },
+    //     })
+    //     .then((res) => {
+    //       console.log("getVerse: ", res);
+    //       // setVerse(res.data.verse);
+    //       // setNotation(res.data.notation);
+    //       setLoading(false);
+    //     })
+    //     .catch((err) => {
+    //       console.log(err);
+    //     });
+    //   console.log(res);
+    // });
+
+    Auth.currentSession().then((session) => {
+      let accessToken = session.getAccessToken();
+      let email = session.getIdToken().payload.email;
+      console.log("email: ", email);
+      axios
+        .get(`http://localhost:9292/home`, {
+          headers: { "P4L-email": email },
+        })
+        .then((res) => {
+          console.log("getVerse: ", res);
+          setVerse(res.data.scripture);
+          setNotation(res.data.notation);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    });
   };
 
   const [fontsLoaded] = useFonts({
