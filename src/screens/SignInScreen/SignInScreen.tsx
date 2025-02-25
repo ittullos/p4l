@@ -20,6 +20,7 @@ import { useNavigation } from "@react-navigation/native";
 import { Auth } from "aws-amplify";
 import { useForm, Controller } from "react-hook-form";
 import { AuthContext } from "../../navigation/authContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const SignInScreen = () => {
   const [email, setEmail] = useState("");
@@ -42,8 +43,14 @@ const SignInScreen = () => {
     setLoading(true);
     try {
       const user = await Auth.signIn(email, password);
+      const session = await Auth.currentSession();
+      const accessToken = session.getAccessToken().getJwtToken();
+      const idToken = session.getIdToken().getJwtToken();
       setUser(user);
-      // navigation.navigate('Home')
+
+      // Store the accessToken in AsyncStorage
+      await AsyncStorage.setItem("accessToken", accessToken);
+      await AsyncStorage.setItem("idToken", idToken);
     } catch (e) {
       Alert.alert("Oops", e.message);
     }

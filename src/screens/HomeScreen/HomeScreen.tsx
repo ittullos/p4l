@@ -14,6 +14,7 @@ import * as SplashScreen from "expo-splash-screen";
 import axios from "axios";
 import CircularButton from "../../components/CircularButton";
 import RouteStats from "../../components/RouteStats";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 // import { RouteContext } from '../../context/routeContext'
 
 const HomeScreen = (props) => {
@@ -53,52 +54,59 @@ const HomeScreen = (props) => {
   useEffect(() => {
     let ignore = false;
     if (!ignore) {
-      getVerse();
+      fetchVerse();
     }
     return () => {
       ignore = true;
     };
   }, []);
 
-  const getVerse = () => {
-    // Auth.currentSession().then((res) => {
-    //   let accessToken = res.getAccessToken();
-    //   let jwt = accessToken.getJwtToken();
-    //   axios
-    //     .get(`http://localhost:9292/home`, {
-    //       headers: { Authorization: `Bearer ${jwt}` },
-    //     })
-    //     .then((res) => {
-    //       console.log("getVerse: ", res);
-    //       // setVerse(res.data.verse);
-    //       // setNotation(res.data.notation);
-    //       setLoading(false);
-    //     })
-    //     .catch((err) => {
-    //       console.log(err);
-    //     });
-    //   console.log(res);
-    // });
+  const fetchVerse = async () => {
+    try {
+      const accessToken = await AsyncStorage.getItem("accessToken");
+      if (!accessToken) {
+        throw new Error("No access token found");
+      }
 
-    Auth.currentSession().then((session) => {
-      let accessToken = session.getAccessToken();
-      let email = session.getIdToken().payload.email;
-      console.log("email: ", email);
-      axios
-        .get(`http://localhost:9292/home`, {
-          headers: { "P4L-email": email },
-        })
-        .then((res) => {
-          console.log("getVerse: ", res);
-          setVerse(res.data.scripture);
-          setNotation(res.data.notation);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    });
+      const idToken = await AsyncStorage.getItem("idToken");
+      if (!idToken) {
+        throw new Error("No ID token found");
+      }
+
+      console.log("accessToken: ", accessToken);
+      const response = await axios.get("http://localhost:9292/home", {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "X-ID-TOKEN": `Bearer ${idToken}`,
+        },
+      });
+
+      console.log("fetchVerse: ", response);
+      setVerse(response.data.scripture);
+      setNotation(response.data.notation);
+    } catch (error) {
+      console.log("Error fetching verse: ", error);
+    } finally {
+      setLoading(false);
+    }
   };
+  // Auth.currentSession().then((session) => {
+
+  //   console.log("email: ", email);
+  //   axios
+  //     .get(`http://localhost:9292/home`, {
+  //       headers: { "P4L-email": email },
+  //     })
+  //     .then((res) => {
+  //       console.log("getVerse: ", res);
+  //       setVerse(res.data.scripture);
+  //       setNotation(res.data.notation);
+  //       setLoading(false);
+  //     })
+  //     .catch((err) => {
+  //       console.log(err);
+  //     });
+  // });
 
   const [fontsLoaded] = useFonts({
     GeorgiaItalic: require("../../../assets/fonts/georgiai.ttf"),
