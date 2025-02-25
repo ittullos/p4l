@@ -56,11 +56,11 @@ const ConfirmEmailScreen = () => {
       );
       const session = await Auth.currentSession();
       const accessToken = session.getAccessToken().getJwtToken();
-      const idToken = session.getIdToken();
+      const idToken = session.getIdToken().getJwtToken();
 
       // Store the accessToken in AsyncStorage
       await AsyncStorage.setItem("accessToken", accessToken);
-      await AsyncStorage.setItem("idToken", JSON.stringify(idToken));
+      await AsyncStorage.setItem("idToken", idToken);
 
       setUser(user);
     } catch (e) {
