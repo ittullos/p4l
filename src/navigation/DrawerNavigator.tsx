@@ -45,9 +45,21 @@ const DrawerNavigator = (props) => {
           />
         )}
       />
-      <Drawer.Screen name="My Stats" component={StatsScreen} />
-      <Drawer.Screen name="My Commitment" component={CommitmentScreen} />
-      <Drawer.Screen name="Settings" component={SettingsScreen} />
+      <Drawer.Screen
+        name="My Stats"
+        options={{ title: "My Stats", headerTitle: "" }}
+        component={StatsScreen}
+      />
+      <Drawer.Screen
+        name="My Commitment"
+        options={{ title: "My Commitment", headerTitle: "" }}
+        component={CommitmentScreen}
+      />
+      <Drawer.Screen
+        name="Settings"
+        options={{ title: "Settings", headerTitle: "" }}
+        component={SettingsScreen}
+      />
     </Drawer.Navigator>
   );
 };
