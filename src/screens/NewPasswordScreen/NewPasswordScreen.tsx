@@ -19,6 +19,7 @@ import { useNavigation } from "@react-navigation/native";
 import { Auth } from "aws-amplify";
 import { useRoute } from "@react-navigation/native";
 import { AuthContext } from "../../navigation/authContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const NewPasswordScreen = () => {
   const [code, setCode] = useState("");
@@ -41,6 +42,15 @@ const NewPasswordScreen = () => {
     try {
       await Auth.forgotPasswordSubmit(route?.params?.email, code, newPassword);
       const user = await Auth.signIn(route?.params?.email, newPassword);
+
+      const session = await Auth.currentSession();
+      const accessToken = session.getAccessToken().getJwtToken();
+      const idToken = session.getIdToken().getJwtToken();
+
+      // Store the accessToken in AsyncStorage
+      await AsyncStorage.setItem("accessToken", accessToken);
+      await AsyncStorage.setItem("idToken", idToken);
+
       setUser(user);
     } catch (e) {
       Alert.alert("Oops", e.message);
