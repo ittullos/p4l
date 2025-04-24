@@ -12,6 +12,7 @@ import HomeScreen from '../screens/HomeScreen'
 import { Auth, Hub } from 'aws-amplify'
 import { AuthContext } from './authContext'
 import BottomTabNavigator from './BottomTabNavigator'
+import AsyncStorage from '@react-native-async-storage/async-storage'
 
 const Stack = createNativeStackNavigator()
 const Tab = createBottomTabNavigator()
@@ -23,9 +24,20 @@ const Navigation = () => {
     try {
       const authUser = await Auth.currentAuthenticatedUser({bypassCache: true})
       setUser(authUser)
-    } catch (e) {
-      setUser(null)
-    }
+
+      // Extract tokens from the authenticated user object
+      const accessToken = authUser.signInUserSession.accessToken.jwtToken;
+      const idToken = authUser.signInUserSession.idToken.jwtToken;
+
+      // Store tokens in AsyncStorage
+      await AsyncStorage.setItem('accessToken', accessToken);
+      await AsyncStorage.setItem('idToken', idToken);
+      
+    console.log('Tokens stored successfully');
+  } catch (e) {
+    setUser(null);
+    console.error('Error checking user:', e);
+  }
   }
 
   useEffect(() => {

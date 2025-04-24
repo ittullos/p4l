@@ -6,6 +6,8 @@ import axios from "axios";
 import { ActivityIndicator } from "react-native";
 import { View } from "react-native";
 import Auth from "@aws-amplify/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import CONFIG from "../config/config";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -20,36 +22,43 @@ const DevotionalTopTab = () => {
   const [trackPick, setTrackPick] = useState<boolean>(false);
 
   useEffect(() => {
-    fetchDevotionals();
-  }, []);
+    const fetchData = async () => {
+      try {
+        const accessToken = await AsyncStorage.getItem("accessToken");
+        if (!accessToken) {
+        }
 
-  const fetchDevotionals = () => {
-    Auth.currentSession().then((session) => {
-      let accessToken = session.getAccessToken();
-      let email = session.getIdToken().payload.email;
+        const idToken = await AsyncStorage.getItem("idToken");
+        if (!idToken) {
+          throw new Error("No ID token found");
+        }
 
-      axios
-        .get(`http://localhost:9292/devotionals`, {
-          headers: { "P4L-email": email },
-        })
-        .then((res) => {
-          console.log("response: ", res.data);
-          let devotionals = res.data;
-
-          setUrl(devotionals[0]["url"]);
-          setImgUrl(devotionals[0]["img_url"]);
-          setTitle(devotionals[0]["title"]);
-
-          setDevotionalData(res.data);
-          // console.log("devotionals: ", res.data.devotionals);
-          // setCurrentDevotionalIndex(0)
-          // setLoading(false)
-        })
-        .catch((err) => {
-          // console.log(err)
+        console.log("accessToken: ", accessToken);
+        const response = await axios.get(`${CONFIG.SERVER_URL}/devotionals`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "X-ID-TOKEN": `Bearer ${idToken}`,
+          },
         });
-    });
-  };
+
+        console.log("fetchDevotionals: ", response.data.data);
+        let devotionals = response.data.data;
+
+        if (devotionals.length > 0) {
+          setUrl(devotionals[0].url);
+          setImgUrl(devotionals[0].img_url);
+          setTitle(devotionals[0].title);
+        }
+
+        setDevotionalData(devotionals);
+        // console.log("devotionals: ", devotionals);
+      } catch (error) {
+        console.error("Error fetching Journeys: ", error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   useEffect(() => {
     if (devotionalData) {

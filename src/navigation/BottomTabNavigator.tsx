@@ -1,96 +1,127 @@
-import { View, Text } from 'react-native'
-import React, { useState, useContext, useEffect } from 'react'
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
-import HomeScreen from '../screens/HomeScreen'
-import PrayerScreen from '../screens/PrayerScreen'
-import DevotionalScreen from '../screens/DevotionalScreen'
-import { MaterialCommunityIcons } from '@expo/vector-icons'
-import DrawerNavigator from './DrawerNavigator'
-import DevotionalTopTab from './DevotionalTopTab'
-import PrayerTopTab from './PrayerTopTab'
-// import { RouteContext } from '../context/routeContext'
+import React, { useState, useContext, useEffect } from "react";
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import DrawerNavigator from "./DrawerNavigator";
+import DevotionalTopTab from "./DevotionalTopTab";
+import PrayerTopTab from "./PrayerTopTab";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import CONFIG from "../config/config";
 
-const Tab = createBottomTabNavigator()
+const Tab = createBottomTabNavigator();
 
 const BottomTabNavigator = () => {
-  const [prayerCount, setPrayerCount] = useState<number>(0)
-  const [prayerName, setPrayerName] = useState<string>("")
-  const [routeStarted, setRouteStarted] = useState<boolean>(false)
-  // const changeRouteStarted = () => setRouteStarted(!routeStarted)
-  // const routeStarted = createContext<boolean>(false)
+  const [prayerCount, setPrayerCount] = useState<number>(0);
+  const [prayerName, setPrayerName] = useState<string>("");
+  const [residentId, setResidentId] = useState<number | null>(null);
+  const [routeStarted, setRouteStarted] = useState<boolean>(false);
+
+  // Watch for changes to prayerName and log the results
+  useEffect(() => {
+    console.log("Prayer Name changed:", prayerName);
+  }, [prayerName]);
+
+  useEffect(() => {
+    const fetchNextResident = async () => {
+      try {
+        const accessToken = await AsyncStorage.getItem("accessToken");
+        if (!accessToken) {
+          throw new Error("No access token found");
+        }
+
+        const idToken = await AsyncStorage.getItem("idToken");
+        if (!idToken) {
+          throw new Error("No ID token found");
+        }
+
+        const response = await axios.get(
+          `${CONFIG.SERVER_URL}/user/residents/next-resident`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "X-ID-TOKEN": `Bearer ${idToken}`,
+            },
+          }
+        );
+
+        console.log("Next Resident:", response.data.data);
+        setPrayerName(response.data.data?.name || "No resident found");
+        setResidentId(response.data.data?.id || null);
+      } catch (error) {
+        console.error("Error fetching next resident:", error);
+      }
+    };
+
+    fetchNextResident();
+  }, []);
 
   return (
-    // <RouteContext.Provider value={{routeStarted, setRouteStarted}}>
-    //   {children}
-      <Tab.Navigator 
-        initialRouteName='Home'
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName
-            let routeName = route.name
-            size = 35
+    <Tab.Navigator
+      initialRouteName="Home"
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarIcon: ({ focused, color, size }) => {
+          let iconName;
+          let routeName = route.name;
+          size = 35;
 
-            if (routeName === 'Home') {
-              iconName = focused ? 'home' : 'home-outline'
-            } else if (routeName === 'Prayer') {
-              iconName = focused ? 'account-group' : 'account-group-outline'
-            } else if (routeName === 'Devotional') {
-              iconName = focused ? 'play' : 'play-outline'
-            }
-            return (
-              <MaterialCommunityIcons 
-                name={iconName} 
-                size={size} 
-                color={color}
-              /> 
-            )
+          if (routeName === "Home") {
+            iconName = focused ? "home" : "home-outline";
+          } else if (routeName === "Prayer") {
+            iconName = focused ? "account-group" : "account-group-outline";
+          } else if (routeName === "Devotional") {
+            iconName = focused ? "play" : "play-outline";
+          }
+          return (
+            <MaterialCommunityIcons name={iconName} size={size} color={color} />
+          );
+        },
+        tabBarActiveTintColor: "#cce70b",
+        tabBarInactiveTintColor: "white",
+        tabBarStyle: [
+          {
+            backgroundColor: "#071448",
+            height: 90,
+            padding: 10,
           },
-          tabBarActiveTintColor: '#cce70b',
-          tabBarInactiveTintColor: 'white',
-          tabBarStyle: [
-            {
-              backgroundColor: '#071448',
-              height: 90,
-              padding: 10
-            },
-            null
-          ],
-        })}
-      >
-        <Tab.Screen 
-          name="Devotional" 
-          component={DevotionalTopTab} 
-        />
-        <Tab.Screen 
-          name="Home"
-          // component={DevotionalTopTab}
-          children={ () => 
-            <DrawerNavigator 
-              prayerCount={prayerCount}
-              prayerName={prayerName} 
-              setPrayerCount={setPrayerCount}
-              setPrayerName={setPrayerName}
-              routeStarted={routeStarted}
-              setRouteStarted={setRouteStarted}
-            /> 
-          }
-        />
-        <Tab.Screen 
-          name="Prayer" 
-          children={ () => 
-            <PrayerTopTab 
-              prayerCount={prayerCount}
-              prayerName={prayerName} 
-              setPrayerCount={setPrayerCount}
-              setPrayerName={setPrayerName}
-              routeStarted={routeStarted}
-            /> 
-          }
-        />
-      </Tab.Navigator>
+          null,
+        ],
+      })}
+    >
+      <Tab.Screen name="Devotional" component={DevotionalTopTab} />
+      <Tab.Screen
+        name="Home"
+        // component={DevotionalTopTab}
+        children={() => (
+          <DrawerNavigator
+            prayerCount={prayerCount}
+            prayerName={prayerName}
+            setPrayerCount={setPrayerCount}
+            setPrayerName={setPrayerName}
+            routeStarted={routeStarted}
+            setRouteStarted={setRouteStarted}
+            residentId={residentId}
+            setResidentId={setResidentId}
+          />
+        )}
+      />
+      <Tab.Screen
+        name="Prayer"
+        children={() => (
+          <PrayerTopTab
+            prayerCount={prayerCount}
+            prayerName={prayerName}
+            setPrayerCount={setPrayerCount}
+            setPrayerName={setPrayerName}
+            routeStarted={routeStarted}
+            residentId={residentId}
+            setResidentId={setResidentId}
+          />
+        )}
+      />
+    </Tab.Navigator>
     // </RouteContext.Provider>
-  )
-}
+  );
+};
 
-export default BottomTabNavigator
+export default BottomTabNavigator;

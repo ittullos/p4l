@@ -13,7 +13,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import CustomInput from "../../components/CustomInput";
 import CustomButton from "../../components/CustomButton";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import SocialSignInButtons from "../../components/SocialSignInButtons";
 import CustomButtonClear from "../../components/CustomButtonClear";
 import { useNavigation } from "@react-navigation/native";
 import { useForm, Controller } from "react-hook-form";
@@ -107,8 +106,6 @@ const SignUpScreen = () => {
             </Text>
           </Text>
         </View>
-        <SocialSignInButtons />
-
         <View style={{ marginVertical: 13 }}>
           <Pressable onPress={onSignInPressed}>
             <Text style={{ fontWeight: "bold", color: "white" }}>
@@ -123,16 +120,18 @@ const SignUpScreen = () => {
 
 const styles = StyleSheet.create({
   root: {
-    alignItems: "center",
+    flex: 1, // Ensures the container takes up the full height of the screen
+    alignItems: "center", // Centers content horizontally
+    justifyContent: "center", // Centers content vertically
     padding: 0,
-    maxHeight: "120%",
-    justifyContent: "center",
   },
   linearGradient: {
-    alignItems: "center",
-    height: "100%",
-
+    flex: 1, // Ensures the gradient fills the parent container
+    alignItems: "center", // Centers content horizontally
+    justifyContent: "center", // Centers content vertically
     width: "100%",
+    height: "100%",
+    marginTop: -200,
   },
   checkboxContainer: {
     flexDirection: "row",

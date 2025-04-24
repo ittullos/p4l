@@ -15,7 +15,7 @@ import axios from "axios";
 import CircularButton from "../../components/CircularButton";
 import RouteStats from "../../components/RouteStats";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-// import { RouteContext } from '../../context/routeContext'
+import CONFIG from "../../config/config";
 
 const HomeScreen = (props) => {
   const [verse, setVerse] = useState("");
@@ -25,27 +25,179 @@ const HomeScreen = (props) => {
   const countRef = useRef(0);
   const [startTime, setStartTime] = useState(0);
   const [endTime, setEndTime] = useState(0);
-  // const routeStarted = useContext(RouteContext)
+  const [routeId, setRouteId] = useState<number | null>(null);
+  const [routeDistance, setRouteDistance] = useState(0.0);
 
-  // const signOut = () => {
-  //   Auth.signOut()
-  // }
   const handleRouteStart = () => {
     props.setRouteStarted(!props.routeStarted);
   };
 
   useEffect(() => {
+    let distanceInterval;
+
     if (props.routeStarted) {
-      setStartTime(Date.now());
-      countRef.current = setInterval(() => {
-        setEndTime(Date.now());
-      }, 1000);
+      // Start the interval to update the route distance every 3 seconds
+      distanceInterval = setInterval(() => {
+        const randomIncrement = (Math.random() * (0.03 - 0.01) + 0.01).toFixed(
+          2
+        ); // Random value between 0.01 and 0.03
+        setRouteDistance((prevDistance) =>
+          parseFloat((prevDistance + parseFloat(randomIncrement)).toFixed(2))
+        );
+      }, 3000);
     } else {
-      clearInterval(countRef.current);
-      setTimer(0);
-      props.setPrayerCount(0);
+      // Reset the distance when the route stops
+      setRouteDistance(0.0);
+    }
+
+    return () => clearInterval(distanceInterval); // Cleanup the interval on unmount or when the route stops
+  }, [props.routeStarted]);
+
+  useEffect(() => {
+    // Watch for changes to routeStarted and trigger startRoute
+    const startRoute = async () => {
+      try {
+        const accessToken = await AsyncStorage.getItem("accessToken");
+        if (!accessToken) {
+          throw new Error("No access token found");
+        }
+
+        const idToken = await AsyncStorage.getItem("idToken");
+        if (!idToken) {
+          throw new Error("No ID token found");
+        }
+
+        // POST request to create a new route
+        const response = await axios.post(
+          `${CONFIG.SERVER_URL}/user/routes`,
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "X-ID-TOKEN": `Bearer ${idToken}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        console.log("Route started successfully:", response.data.data);
+        setRouteId(response.data.data.id); // Save the route ID
+        setStartTime(Date.now()); // Record the start time
+      } catch (error) {
+        console.error("Error starting route:", error);
+      }
+    };
+
+    if (props.routeStarted) {
+      startRoute();
     }
   }, [props.routeStarted]);
+
+  useEffect(() => {
+    let timerInterval;
+
+    if (props.routeStarted) {
+      // Start the timer interval to update every second
+      timerInterval = setInterval(() => {
+        setTimer((Date.now() - startTime) / 1000); // Update the timer every second
+      }, 1000);
+    } else {
+      // Reset the timer when the route stops
+      setTimer(0);
+    }
+
+    return () => clearInterval(timerInterval); // Cleanup the timer interval on unmount or when route stops
+  }, [props.routeStarted, startTime]);
+
+  useEffect(() => {
+    // Watch for changes to routeId and trigger updateRoute/stopRoute
+    const updateRoute = async () => {
+      console.log("Updating route...");
+      try {
+        const accessToken = await AsyncStorage.getItem("accessToken");
+        if (!accessToken) {
+          throw new Error("No access token found");
+        }
+
+        const idToken = await AsyncStorage.getItem("idToken");
+        if (!idToken) {
+          throw new Error("No ID token found");
+        }
+
+        const response = await axios.patch(
+          `${CONFIG.SERVER_URL}/user/routes`,
+          {
+            mileage: 0,
+            id: routeId,
+            stop: false,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "X-ID-TOKEN": `Bearer ${idToken}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        console.log("Route updated successfully:", response.data.data);
+        setEndTime(Date.now()); // Update the end time
+      } catch (error) {
+        console.error("Error updating route:", error);
+      }
+    };
+
+    const stopRoute = async () => {
+      try {
+        const accessToken = await AsyncStorage.getItem("accessToken");
+        if (!accessToken) {
+          throw new Error("No access token found");
+        }
+
+        const idToken = await AsyncStorage.getItem("idToken");
+        if (!idToken) {
+          throw new Error("No ID token found");
+        }
+
+        const response = await axios.patch(
+          `${CONFIG.SERVER_URL}/user/routes`,
+          {
+            id: routeId,
+            mileage: 0, // Replace with actual mileage if available
+            stop: true, // Set the stop attribute to true
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "X-ID-TOKEN": `Bearer ${idToken}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        console.log("Route stopped successfully:", response.data.data);
+
+        // Reset the prayer count after the route is stopped
+        props.setPrayerCount(0);
+
+        setRouteId(null); // Clear the route ID after stopping
+      } catch (error) {
+        console.error("Error stopping route:", error);
+      }
+    };
+
+    if (routeId && props.routeStarted) {
+      // Start the interval to update the route every 5 seconds
+      countRef.current = setInterval(() => {
+        updateRoute();
+      }, 5000);
+
+      return () => {
+        clearInterval(countRef.current); // Cleanup interval on unmount or when route stops
+        stopRoute(); // Stop the route when routeId is cleared and routeStarted is false
+      };
+    }
+  }, [routeId, props.routeStarted]);
 
   useEffect(() => {
     setTimer((endTime - startTime) / 1000);
@@ -74,39 +226,25 @@ const HomeScreen = (props) => {
       }
 
       console.log("accessToken: ", accessToken);
-      const response = await axios.get("http://localhost:9292/home", {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "X-ID-TOKEN": `Bearer ${idToken}`,
-        },
-      });
+      const response = await axios.get(
+        `${CONFIG.SERVER_URL}/home`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "X-ID-TOKEN": `Bearer ${idToken}`,
+          },
+        }
+      );
 
-      console.log("fetchVerse: ", response);
-      setVerse(response.data.scripture);
-      setNotation(response.data.notation);
+      console.log("fetchVerse: ", response.data.data);
+      setVerse(response.data.data.scripture);
+      setNotation(response.data.data.notation);
     } catch (error) {
       console.log("Error fetching verse: ", error);
     } finally {
       setLoading(false);
     }
   };
-  // Auth.currentSession().then((session) => {
-
-  //   console.log("email: ", email);
-  //   axios
-  //     .get(`http://localhost:9292/home`, {
-  //       headers: { "P4L-email": email },
-  //     })
-  //     .then((res) => {
-  //       console.log("getVerse: ", res);
-  //       setVerse(res.data.scripture);
-  //       setNotation(res.data.notation);
-  //       setLoading(false);
-  //     })
-  //     .catch((err) => {
-  //       console.log(err);
-  //     });
-  // });
 
   const [fontsLoaded] = useFonts({
     GeorgiaItalic: require("../../../assets/fonts/georgiai.ttf"),
@@ -203,7 +341,11 @@ const HomeScreen = (props) => {
         }}
       >
         {props.routeStarted ? (
-          <RouteStats timer={timer} prayerCount={props.prayerCount} />
+          <RouteStats
+            timer={timer}
+            prayerCount={props.prayerCount}
+            routeDistance={routeDistance}
+          />
         ) : null}
       </View>
     </View>

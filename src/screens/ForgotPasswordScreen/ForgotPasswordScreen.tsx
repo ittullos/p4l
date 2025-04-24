@@ -14,7 +14,6 @@ import CustomInput from "../../components/CustomInput";
 import CustomButton from "../../components/CustomButton";
 import CustomButtonClear from "../../components/CustomButtonClear";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import SocialSignInButtons from "../../components/SocialSignInButtons";
 import { useNavigation } from "@react-navigation/native";
 import { Auth } from "aws-amplify";
 import { useRoute } from "@react-navigation/native";

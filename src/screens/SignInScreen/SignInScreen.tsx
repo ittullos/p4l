@@ -15,7 +15,6 @@ import CustomInput from "../../components/CustomInput";
 import CustomButton from "../../components/CustomButton";
 import CustomButtonClear from "../../components/CustomButtonClear";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import SocialSignInButtons from "../../components/SocialSignInButtons";
 import { useNavigation } from "@react-navigation/native";
 import { Auth } from "aws-amplify";
 import { useForm, Controller } from "react-hook-form";
@@ -51,6 +50,12 @@ const SignInScreen = () => {
       // Store the accessToken in AsyncStorage
       await AsyncStorage.setItem("accessToken", accessToken);
       await AsyncStorage.setItem("idToken", idToken);
+
+      // Debug logs to verify token storage
+      console.log("Access Token:", accessToken);
+      console.log("ID Token:", idToken);
+
+      Alert.alert("Success", "You are signed in!");
     } catch (e) {
       Alert.alert("Oops", e.message);
     }
@@ -102,7 +107,6 @@ const SignInScreen = () => {
             </Text>
           </Pressable>
         </View>
-        <SocialSignInButtons />
         <View style={{ marginVertical: 13 }}>
           <Pressable onPress={onSignUpPressed}>
             <Text style={{ fontWeight: "bold", color: "white" }}>
@@ -117,10 +121,10 @@ const SignInScreen = () => {
 
 const styles = StyleSheet.create({
   root: {
-    alignItems: "center",
+    flex: 1, // Ensures the container takes up the full height of the screen
+    alignItems: "center", // Centers content horizontally
+    justifyContent: "center", // Centers content vertically
     padding: 0,
-    maxHeight: "120%",
-    justifyContent: "center",
   },
   logo: {
     width: "85%",
@@ -132,10 +136,12 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   linearGradient: {
-    alignItems: "center",
-    height: "100%",
-
+    flex: 1, // Ensures the gradient fills the parent container
+    alignItems: "center", // Centers content horizontally
+    justifyContent: "center", // Centers content vertically
     width: "100%",
+    height: "100%",
+    marginTop: -200,
   },
   checkboxContainer: {
     flexDirection: "row",

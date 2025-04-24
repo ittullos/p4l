@@ -4,6 +4,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Modal,
 } from "react-native";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
@@ -12,12 +13,13 @@ import Seperator from "../../components/Seperator";
 import { openBrowserAsync } from "expo-web-browser";
 import * as DocumentPicker from "expo-document-picker";
 import { Auth } from "aws-amplify";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import CONFIG from "../../config/config";
 
 const PrayerListScreen = () => {
   const [selectedFile, setSelectedFile] = useState();
   const [showUploadSuccess, setShowUploadSuccess] = useState(false);
   const [showUploadError, setShowUploadError] = useState(false);
-
   const [loading, setLoading] = useState(true);
 
   const pickFile = async () => {
@@ -25,29 +27,74 @@ const PrayerListScreen = () => {
       const file = await DocumentPicker.getDocumentAsync({
         type: "application/pdf",
       });
-      setSelectedFile(file);
+
+      console.log("Selected File:", file); // Debugging the selected file
+
+      if (!file.canceled && file.assets && file.assets.length > 0) {
+        console.log("Selected File Details:", file.assets[0]); // Log the actual file details
+        setSelectedFile(file);
+      } else if (file.canceled) {
+        console.warn("File picking was canceled.");
+      } else {
+        console.warn("No file selected or invalid file structure.");
+      }
     } catch (error) {
       console.warn("File picking error: ", error);
     }
   };
 
   const uploadFile = async () => {
-    Auth.currentSession().then((session) => {
-      let accessToken = session.getAccessToken();
-      let email = session.getIdToken().payload.email;
-      console.log("email2: ", email);
-      axios
-        .post(`http://localhost:9292/user/residents`, {
-          headers: { "P4L-email": email },
-          data: selectedFile,
-        })
-        .then((res) => {
-          console.log("/prayer_list response: ", res);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
-    });
+    try {
+      const accessToken = await AsyncStorage.getItem("accessToken");
+      if (!accessToken) {
+        throw new Error("No access token found");
+      }
+
+      const idToken = await AsyncStorage.getItem("idToken");
+      if (!idToken) {
+        throw new Error("No ID token found");
+      }
+
+      if (!selectedFile) {
+        throw new Error("No file selected");
+      }
+
+      // Extract file details from the assets array
+      const fileDetails = selectedFile.assets[0];
+
+      // Create FormData and append the file
+      const formData = new FormData();
+      formData.append("file", {
+        uri: fileDetails.uri,
+        name: fileDetails.name,
+        type: fileDetails.mimeType || "application/pdf",
+      });
+
+      // Debugging FormData
+      console.log("FormData contents:");
+      formData._parts.forEach(([key, value]) => {
+        console.log(`${key}:`, value);
+      });
+
+      // Make the POST request with FormData
+      const response = await axios.post(
+        `${CONFIG.SERVER_URL}/user/residents`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "X-ID-TOKEN": `Bearer ${idToken}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Prayer List upload response: ", response.data);
+      setShowUploadSuccess(true);
+    } catch (error) {
+      console.error("Error uploading Prayer List: ", error);
+      setShowUploadError(true);
+    }
   };
 
   return (
@@ -140,6 +187,48 @@ const PrayerListScreen = () => {
         </View>
         <View style={{ marginTop: 40 }}></View>
       </View>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showUploadSuccess}
+        onRequestClose={() => {
+          setShowUploadSuccess(!showUploadSuccess);
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>
+              Prayer List Uploaded Successfully!
+            </Text>
+            <AppButton
+              text="Close"
+              type="GREEN"
+              onPress={() => setShowUploadSuccess(false)}
+            />
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showUploadError}
+        onRequestClose={() => {
+          setShowUploadError(!showUploadError);
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>Error Uploading Prayer List!</Text>
+            <AppButton
+              text="Close"
+              type="RED"
+              onPress={() => setShowUploadError(false)}
+            />
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -178,6 +267,25 @@ const styles = StyleSheet.create({
     fontSize: 24,
     marginTop: 11,
     color: "blue",
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 20,
+    alignItems: "center",
+  },
+  modalText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
   },
 });
 
