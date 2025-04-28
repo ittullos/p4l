@@ -15,8 +15,9 @@ import * as DocumentPicker from "expo-document-picker";
 import { Auth } from "aws-amplify";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CONFIG from "../../config/config";
+import { fetchNextResident } from "../../utils/fetchNextResident";
 
-const PrayerListScreen = () => {
+const PrayerListScreen = (props) => {
   const [selectedFile, setSelectedFile] = useState();
   const [showUploadSuccess, setShowUploadSuccess] = useState(false);
   const [showUploadError, setShowUploadError] = useState(false);
@@ -91,6 +92,9 @@ const PrayerListScreen = () => {
 
       console.log("Prayer List upload response: ", response.data);
       setShowUploadSuccess(true);
+
+      // Fetch the next resident after a successful upload
+      await fetchNextResident(props.setPrayerName, props.setResidentId);
     } catch (error) {
       console.error("Error uploading Prayer List: ", error);
       setShowUploadError(true);
