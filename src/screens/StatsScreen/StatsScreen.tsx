@@ -10,43 +10,26 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Progress from "react-native-progress";
 import CONFIG from "../../config/config";
+import { fetchStats } from "../../utils/fetchStats";
 
-const StatsScreen = ({ navigation }) => {
-  const [stats, setStats] = useState(null);
+const StatsScreen = ({ stats, setStats, navigation }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchStats();
+    const loadStats = async () => {
+      setLoading(true); // Set loading before calling fetchStats
+      try {
+        const data = await fetchStats();
+        setStats(data);
+      } catch (error) {
+        console.error("Error loading stats:", error);
+      } finally {
+        setLoading(false); // Set loading to false after fetching
+      }
+    };
+
+    loadStats();
   }, []);
-
-  const fetchStats = async () => {
-    try {
-      const accessToken = await AsyncStorage.getItem("accessToken");
-      if (!accessToken) {
-        throw new Error("No access token found");
-      }
-
-      const idToken = await AsyncStorage.getItem("idToken");
-      if (!idToken) {
-        throw new Error("No ID token found");
-      }
-
-      console.log("accessToken: ", accessToken);
-      const response = await axios.get(`${CONFIG.SERVER_URL}/user/stats`, {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "X-ID-TOKEN": `Bearer ${idToken}`,
-        },
-      });
-
-      console.log("fetchStats: ", response.data.data);
-      setStats(response.data.data);
-    } catch (error) {
-      console.error("Error fetching stats: ", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   if (loading) {
     return (

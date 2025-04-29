@@ -12,6 +12,7 @@ import { FontAwesome } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import CONFIG from "../../config/config";
+import { fetchStats } from "../../utils/fetchStats";
 
 const RadioButton = ({ selected, onPress }) => (
   <TouchableOpacity onPress={onPress} style={styles.radioButtonContainer}>
@@ -21,7 +22,7 @@ const RadioButton = ({ selected, onPress }) => (
   </TouchableOpacity>
 );
 
-const CommitmentScreen = () => {
+const CommitmentScreen = ({ stats, setStats }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const [journeys, setJourneys] = useState([]);
@@ -76,6 +77,16 @@ const CommitmentScreen = () => {
 
       console.log("Commit response: ", response.data.data);
       setSuccessModalVisible(true); // Show success modal
+
+      // Fetch updated stats after commitment
+      try {
+        const updatedStats = await fetchStats();
+        setStats(updatedStats); // Update the shared stats state
+        console.log("Updated Stats:", updatedStats);
+        // Optionally, pass updatedStats to a parent component or update local state
+      } catch (error) {
+        console.error("Error fetching updated stats:", error);
+      }
     } catch (error) {
       console.error("Error committing to journey: ", error);
     }

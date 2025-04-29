@@ -9,10 +9,13 @@ import HomeScreen from "../screens/HomeScreen";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { DrawerActions } from "@react-navigation/native";
 import SettingsScreen from "../screens/SettingsScreen";
+import { useState } from "react";
 
 const Drawer = createDrawerNavigator();
 
 const DrawerNavigator = (props) => {
+  const [stats, setStats] = useState(null); // Shared stats state
+
   return (
     <Drawer.Navigator
       screenOptions={({ navigation }) => ({
@@ -37,9 +40,7 @@ const DrawerNavigator = (props) => {
         children={() => (
           <HomeScreen
             prayerCount={props.prayerCount}
-            // prayerName={props.prayerName}
             setPrayerCount={props.setPrayerCount}
-            //setPrayerName={setPrayerName}
             routeStarted={props.routeStarted}
             setRouteStarted={props.setRouteStarted}
           />
@@ -48,12 +49,12 @@ const DrawerNavigator = (props) => {
       <Drawer.Screen
         name="My Stats"
         options={{ title: "My Stats", headerTitle: "" }}
-        component={StatsScreen}
+        children={() => <StatsScreen stats={stats} setStats={setStats} />}
       />
       <Drawer.Screen
         name="My Commitment"
         options={{ title: "My Commitment", headerTitle: "" }}
-        component={CommitmentScreen}
+        children={() => <CommitmentScreen stats={stats} setStats={setStats} />}
       />
       <Drawer.Screen
         name="Settings"
