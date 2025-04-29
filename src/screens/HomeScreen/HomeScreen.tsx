@@ -16,6 +16,7 @@ import CircularButton from "../../components/CircularButton";
 import RouteStats from "../../components/RouteStats";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CONFIG from "../../config/config";
+import { fetchStats } from "../../utils/fetchStats";
 
 const HomeScreen = (props) => {
   const [verse, setVerse] = useState("");
@@ -181,6 +182,15 @@ const HomeScreen = (props) => {
         props.setPrayerCount(0);
 
         setRouteId(null); // Clear the route ID after stopping
+
+        // Fetch updated stats after stopping the route
+        try {
+          const updatedStats = await fetchStats();
+          props.setStats(updatedStats); // Update the shared stats state
+          console.log("Updated Stats:", updatedStats);
+        } catch (error) {
+          console.error("Error fetching updated stats:", error);
+        }
       } catch (error) {
         console.error("Error stopping route:", error);
       }
@@ -226,15 +236,12 @@ const HomeScreen = (props) => {
       }
 
       console.log("accessToken: ", accessToken);
-      const response = await axios.get(
-        `${CONFIG.SERVER_URL}/home`,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "X-ID-TOKEN": `Bearer ${idToken}`,
-          },
-        }
-      );
+      const response = await axios.get(`${CONFIG.SERVER_URL}/home`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "X-ID-TOKEN": `Bearer ${idToken}`,
+        },
+      });
 
       console.log("fetchVerse: ", response.data.data);
       setVerse(response.data.data.scripture);

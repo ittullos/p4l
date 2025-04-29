@@ -43,6 +43,7 @@ const DrawerNavigator = (props) => {
             setPrayerCount={props.setPrayerCount}
             routeStarted={props.routeStarted}
             setRouteStarted={props.setRouteStarted}
+            setStats={setStats} // Pass setStats to HomeScreen
           />
         )}
       />
