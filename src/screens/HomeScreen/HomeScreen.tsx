@@ -34,6 +34,10 @@ const HomeScreen = (props) => {
   };
 
   useEffect(() => {
+    console.log("Total Route Distance:", routeDistance);
+  }, [routeDistance]);
+
+  useEffect(() => {
     let distanceInterval;
 
     if (props.routeStarted) {
@@ -45,7 +49,7 @@ const HomeScreen = (props) => {
         setRouteDistance((prevDistance) =>
           parseFloat((prevDistance + parseFloat(randomIncrement)).toFixed(2))
         );
-      }, 3000);
+      }, 5000);
     } else {
       // Reset the distance when the route stops
       setRouteDistance(0.0);
@@ -55,8 +59,8 @@ const HomeScreen = (props) => {
   }, [props.routeStarted]);
 
   useEffect(() => {
-    // Watch for changes to routeStarted and trigger startRoute
     const startRoute = async () => {
+      console.log("Starting route...");
       try {
         const accessToken = await AsyncStorage.getItem("accessToken");
         if (!accessToken) {
@@ -89,29 +93,57 @@ const HomeScreen = (props) => {
       }
     };
 
-    if (props.routeStarted) {
+    if (props.routeStarted && !routeId) {
+      // Only start the route if it hasn't been started already
       startRoute();
     }
-  }, [props.routeStarted]);
+  }, [props.routeStarted, routeId]);
 
   useEffect(() => {
-    let timerInterval;
+    const stopRoute = async () => {
+      console.log("Stopping route...");
+      try {
+        const accessToken = await AsyncStorage.getItem("accessToken");
+        if (!accessToken) {
+          throw new Error("No access token found");
+        }
 
-    if (props.routeStarted) {
-      // Start the timer interval to update every second
-      timerInterval = setInterval(() => {
-        setTimer((Date.now() - startTime) / 1000); // Update the timer every second
-      }, 1000);
-    } else {
-      // Reset the timer when the route stops
-      setTimer(0);
+        const idToken = await AsyncStorage.getItem("idToken");
+        if (!idToken) {
+          throw new Error("No ID token found");
+        }
+
+        const response = await axios.patch(
+          `${CONFIG.SERVER_URL}/user/routes`,
+          {
+            id: routeId,
+            mileage: routeDistance, // Use the updated routeDistance
+            stop: true,
+          },
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "X-ID-TOKEN": `Bearer ${idToken}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        console.log("Route stopped successfully:", response.data.data);
+        setRouteId(null); // Clear the route ID after stopping
+        setStartTime(0); // Reset the start time
+      } catch (error) {
+        console.error("Error stopping route:", error);
+      }
+    };
+
+    if (!props.routeStarted && routeId) {
+      // Only stop the route if it has been started
+      stopRoute();
     }
-
-    return () => clearInterval(timerInterval); // Cleanup the timer interval on unmount or when route stops
-  }, [props.routeStarted, startTime]);
+  }, [props.routeStarted, routeId, routeDistance]);
 
   useEffect(() => {
-    // Watch for changes to routeId and trigger updateRoute/stopRoute
     const updateRoute = async () => {
       console.log("Updating route...");
       try {
@@ -128,7 +160,7 @@ const HomeScreen = (props) => {
         const response = await axios.patch(
           `${CONFIG.SERVER_URL}/user/routes`,
           {
-            mileage: 0,
+            mileage: routeDistance, // Use the updated routeDistance
             id: routeId,
             stop: false,
           },
@@ -142,72 +174,15 @@ const HomeScreen = (props) => {
         );
 
         console.log("Route updated successfully:", response.data.data);
-        setEndTime(Date.now()); // Update the end time
       } catch (error) {
         console.error("Error updating route:", error);
       }
     };
 
-    const stopRoute = async () => {
-      try {
-        const accessToken = await AsyncStorage.getItem("accessToken");
-        if (!accessToken) {
-          throw new Error("No access token found");
-        }
-
-        const idToken = await AsyncStorage.getItem("idToken");
-        if (!idToken) {
-          throw new Error("No ID token found");
-        }
-
-        const response = await axios.patch(
-          `${CONFIG.SERVER_URL}/user/routes`,
-          {
-            id: routeId,
-            mileage: 0, // Replace with actual mileage if available
-            stop: true, // Set the stop attribute to true
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "X-ID-TOKEN": `Bearer ${idToken}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        console.log("Route stopped successfully:", response.data.data);
-
-        // Reset the prayer count after the route is stopped
-        props.setPrayerCount(0);
-
-        setRouteId(null); // Clear the route ID after stopping
-
-        // Fetch updated stats after stopping the route
-        try {
-          const updatedStats = await fetchStats();
-          props.setStats(updatedStats); // Update the shared stats state
-          console.log("Updated Stats:", updatedStats);
-        } catch (error) {
-          console.error("Error fetching updated stats:", error);
-        }
-      } catch (error) {
-        console.error("Error stopping route:", error);
-      }
-    };
-
-    if (routeId && props.routeStarted) {
-      // Start the interval to update the route every 5 seconds
-      countRef.current = setInterval(() => {
-        updateRoute();
-      }, 5000);
-
-      return () => {
-        clearInterval(countRef.current); // Cleanup interval on unmount or when route stops
-        stopRoute(); // Stop the route when routeId is cleared and routeStarted is false
-      };
+    if (props.routeStarted && routeId) {
+      updateRoute();
     }
-  }, [routeId, props.routeStarted]);
+  }, [routeDistance, routeId, props.routeStarted]);
 
   useEffect(() => {
     setTimer((endTime - startTime) / 1000);
