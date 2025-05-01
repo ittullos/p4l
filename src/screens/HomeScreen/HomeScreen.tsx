@@ -109,6 +109,7 @@ const HomeScreen = (props) => {
         setRouteId={setRouteId}
         routeDistance={routeDistance}
         setRouteDistance={setRouteDistance}
+        setStats={props.setStats}
       />
       <View style={styles.verseContainer}>
         <Text style={styles.verseTitle}>Verse of the Day</Text>

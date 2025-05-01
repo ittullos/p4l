@@ -58,6 +58,9 @@ const StatsScreen = ({ stats, setStats, navigation }) => {
     total_prayers,
   } = stats;
 
+  const adjustedCommitmentDistance = commitment_distance / 100;
+  const adjustedTotalDistance = total_distance / 100;
+
   return (
     <View style={styles.container}>
       {/* Commitment Stats Section */}
@@ -66,7 +69,7 @@ const StatsScreen = ({ stats, setStats, navigation }) => {
           <Text style={styles.sectionTitle}>Commitment Stats</Text>
           <Text style={styles.journeyTitle}>{current_journey.title}</Text>
           <Progress.Bar
-            progress={commitment_distance / current_journey.annual_miles}
+            progress={adjustedCommitmentDistance / current_journey.annual_miles}
             width={null}
             height={10}
             color="#4caf50"
@@ -75,7 +78,7 @@ const StatsScreen = ({ stats, setStats, navigation }) => {
             style={styles.progressBar}
           />
           <Text style={styles.progressText}>
-            {commitment_distance.toFixed(2)} miles of{" "}
+            {adjustedCommitmentDistance.toFixed(2)} miles of{" "}
             {current_journey.annual_miles} miles
           </Text>
           <Text style={styles.statText}>
@@ -102,7 +105,7 @@ const StatsScreen = ({ stats, setStats, navigation }) => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>All Time Stats</Text>
         <Text style={styles.statText}>
-          Total Distance: {total_distance.toFixed(2)} miles
+          Total Distance: {adjustedTotalDistance.toFixed(2)} miles
         </Text>
         <Text style={styles.statText}>
           Total Duration: {total_duration} hours

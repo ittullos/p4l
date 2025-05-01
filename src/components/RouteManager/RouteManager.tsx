@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import CONFIG from "../../config/config";
+import { fetchStats } from "../../utils/fetchStats";
 
 const RouteManager = ({
   routeStarted,
@@ -10,6 +11,7 @@ const RouteManager = ({
   setRouteId,
   routeDistance,
   setRouteDistance,
+  setStats,
 }) => {
   const routeStartTime = useRef<number | null>(null); // Store the route start time
 
@@ -60,11 +62,14 @@ const RouteManager = ({
         const idToken = await AsyncStorage.getItem("idToken");
         if (!idToken) throw new Error("No ID token found");
 
+        // Multiply routeDistance by 100 and round it
+        const mileage = Math.round(routeDistance * 100);
+
         const response = await axios.patch(
           `${CONFIG.SERVER_URL}/user/routes`,
           {
+            mileage,
             id: routeId,
-            mileage: routeDistance,
             stop: true,
           },
           {
@@ -80,6 +85,11 @@ const RouteManager = ({
         setRouteId(null);
         setRouteDistance(0.0);
         routeStartTime.current = null; // Reset the start time
+
+        // Call fetchStats after successfully stopping the route
+        const stats = await fetchStats();
+        setStats(stats); // Use setStats to update the stats
+        console.log("Updated stats:", stats);
       } catch (error) {
         console.error("Error stopping route:", error);
       }
@@ -112,10 +122,13 @@ const RouteManager = ({
         const idToken = await AsyncStorage.getItem("idToken");
         if (!idToken) throw new Error("No ID token found");
 
+        // Multiply routeDistance by 100 and round it
+        const mileage = Math.round(routeDistance * 100);
+
         const response = await axios.patch(
           `${CONFIG.SERVER_URL}/user/routes`,
           {
-            mileage: routeDistance,
+            mileage,
             id: routeId,
             stop: false,
           },
@@ -146,9 +159,7 @@ const RouteManager = ({
     if (routeStarted) {
       console.log("Starting distance interval...");
       distanceInterval = setInterval(() => {
-        const randomIncrement = (Math.random() * (0.03 - 0.01) + 0.01).toFixed(
-          2
-        );
+        const randomIncrement = (Math.random() * (3 - 1) + 1).toFixed(2);
         setRouteDistance((prevDistance) =>
           parseFloat((prevDistance + parseFloat(randomIncrement)).toFixed(2))
         );
