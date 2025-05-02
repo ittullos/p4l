@@ -50,17 +50,29 @@ const DrawerNavigator = (props) => {
       <Drawer.Screen
         name="My Stats"
         options={{ title: "My Stats", headerTitle: "" }}
-        children={() => <StatsScreen stats={stats} setStats={setStats} />}
+        children={({ navigation }) => (
+          <StatsScreen
+            stats={stats}
+            setStats={setStats}
+            goToHome={props.goToHome} // Use the goToHome callback
+          />
+        )}
       />
       <Drawer.Screen
         name="My Commitment"
         options={{ title: "My Commitment", headerTitle: "" }}
-        children={() => <CommitmentScreen stats={stats} setStats={setStats} />}
+        children={() => (
+          <CommitmentScreen
+            stats={stats}
+            setStats={setStats}
+            goToHome={props.goToHome}
+          />
+        )}
       />
       <Drawer.Screen
         name="Settings"
         options={{ title: "Settings", headerTitle: "" }}
-        component={SettingsScreen}
+        children={() => <SettingsScreen goToHome={props.goToHome} />}
       />
     </Drawer.Navigator>
   );

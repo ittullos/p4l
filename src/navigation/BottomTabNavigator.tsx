@@ -18,6 +18,14 @@ const BottomTabNavigator = () => {
   const [residentId, setResidentId] = useState<number | null>(null);
   const [routeStarted, setRouteStarted] = useState<boolean>(false);
 
+  // Track whether the user is already in the "Home" section
+  const [isInHome, setIsInHome] = useState<boolean>(false);
+
+  // Function to navigate the DrawerNavigator back to Home
+  const goToHome = (navigation) => {
+    navigation.navigate("Home Drawer"); // Navigate to the Home Drawer explicitly
+  };
+
   // Watch for changes to prayerName and log the results
   useEffect(() => {
     console.log("Prayer Name changed:", prayerName);
@@ -63,8 +71,27 @@ const BottomTabNavigator = () => {
       <Tab.Screen name="Devotional" component={DevotionalTopTab} />
       <Tab.Screen
         name="Home"
-        // component={DevotionalTopTab}
-        children={() => (
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            if (isInHome) {
+              // If already in Home, reset the stack
+              e.preventDefault(); // Prevent default behavior
+              goToHome(navigation); // Call the goToHome function
+            } else {
+              // If not in Home, set the state to indicate the user is now in Home
+              setIsInHome(true);
+            }
+          },
+          focus: () => {
+            // When the Home tab is focused, set isInHome to true
+            setIsInHome(true);
+          },
+          blur: () => {
+            // When the Home tab is blurred, set isInHome to false
+            setIsInHome(false);
+          },
+        })}
+        children={({ navigation }) => (
           <DrawerNavigator
             prayerCount={prayerCount}
             prayerName={prayerName}
@@ -74,6 +101,7 @@ const BottomTabNavigator = () => {
             setRouteStarted={setRouteStarted}
             residentId={residentId}
             setResidentId={setResidentId}
+            goToHome={() => goToHome(navigation)}
           />
         )}
       />
