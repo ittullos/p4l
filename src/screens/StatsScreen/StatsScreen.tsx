@@ -61,6 +61,29 @@ const StatsScreen = ({ stats, setStats, navigation }) => {
   const adjustedCommitmentDistance = commitment_distance / 100;
   const adjustedTotalDistance = total_distance / 100;
 
+  // Utility function to format time as hh:mm:ss
+  const formatTime = (seconds) => {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (hrs > 0) {
+      return `${hrs}:${String(mins).padStart(2, "0")}:${String(secs).padStart(
+        2,
+        "0"
+      )}`;
+    } else {
+      return `${String(mins).padStart(2, "0")}:${String(secs).padStart(
+        2,
+        "0"
+      )}`;
+    }
+  };
+
+  // Format durations
+  const formattedCommitmentDuration = formatTime(commitment_duration);
+  const formattedTotalDuration = formatTime(total_duration);
+
   return (
     <View style={styles.container}>
       {/* Commitment Stats Section */}
@@ -82,7 +105,7 @@ const StatsScreen = ({ stats, setStats, navigation }) => {
             {current_journey.annual_miles} miles
           </Text>
           <Text style={styles.statText}>
-            Duration: {commitment_duration} hours
+            Duration: {formattedCommitmentDuration}
           </Text>
           <Text style={styles.statText}>Prayers: {commitment_prayers}</Text>
         </View>
@@ -108,7 +131,7 @@ const StatsScreen = ({ stats, setStats, navigation }) => {
           Total Distance: {adjustedTotalDistance.toFixed(2)} miles
         </Text>
         <Text style={styles.statText}>
-          Total Duration: {total_duration} hours
+          Total Duration: {formattedTotalDuration}
         </Text>
         <Text style={styles.statText}>Total Prayers: {total_prayers}</Text>
       </View>
