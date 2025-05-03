@@ -1,8 +1,10 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Modal, View, Text, TextInput, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import CONFIG from "../../config/config";
 import { fetchStats } from "../../utils/fetchStats";
+import AppButton from "../AppButton";
 
 const RouteManager = ({
   routeStarted,
@@ -14,6 +16,10 @@ const RouteManager = ({
   setStats,
 }) => {
   const routeStartTime = useRef<number | null>(null); // Store the route start time
+
+  // State for mileage entry modal
+  const [showMileageModal, setShowMileageModal] = useState(false);
+  const [enteredMileage, setEnteredMileage] = useState("0.00");
 
   // Start the route
   useEffect(() => {
@@ -52,53 +58,62 @@ const RouteManager = ({
   }, [routeStarted, routeId]);
 
   // Stop the route
-  useEffect(() => {
-    const stopRoute = async () => {
-      console.log("Stopping route...");
-      try {
-        const accessToken = await AsyncStorage.getItem("accessToken");
-        if (!accessToken) throw new Error("No access token found");
-
-        const idToken = await AsyncStorage.getItem("idToken");
-        if (!idToken) throw new Error("No ID token found");
-
-        // Multiply routeDistance by 100 and round it
-        const mileage = Math.round(routeDistance * 100);
-
-        const response = await axios.patch(
-          `${CONFIG.SERVER_URL}/user/routes`,
-          {
-            mileage,
-            id: routeId,
-            stop: true,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "X-ID-TOKEN": `Bearer ${idToken}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-
-        console.log("Route stopped successfully:", response.data.data);
-        setRouteId(null);
-        setRouteDistance(0.0);
-        routeStartTime.current = null; // Reset the start time
-
-        // Call fetchStats after successfully stopping the route
-        const stats = await fetchStats();
-        setStats(stats); // Use setStats to update the stats
-        console.log("Updated stats:", stats);
-      } catch (error) {
-        console.error("Error stopping route:", error);
+  const stopRoute = async () => {
+    console.log("Stopping route...");
+    try {
+      const mileageToAdd = parseFloat(enteredMileage);
+      if (isNaN(mileageToAdd) || mileageToAdd < 0) {
+        alert("Please enter a valid mileage.");
+        return;
       }
-    };
 
-    if (!routeStarted && routeId) {
-      stopRoute();
+      const totalMileage = routeDistance + mileageToAdd;
+
+      const accessToken = await AsyncStorage.getItem("accessToken");
+      if (!accessToken) throw new Error("No access token found");
+
+      const idToken = await AsyncStorage.getItem("idToken");
+      if (!idToken) throw new Error("No ID token found");
+
+      const response = await axios.patch(
+        `${CONFIG.SERVER_URL}/user/routes`,
+        {
+          mileage: Math.round(totalMileage * 100), // Convert to integer (e.g., 1.23 -> 123)
+          id: routeId,
+          stop: true,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "X-ID-TOKEN": `Bearer ${idToken}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Route stopped successfully:", response.data.data);
+
+      // Reset state after stopping the route
+      setRouteId(null);
+      setRouteDistance(0.0);
+      routeStartTime.current = null; // Reset the start time
+      setEnteredMileage("");
+      setShowMileageModal(false);
+
+      // Fetch updated stats
+      const stats = await fetchStats();
+      setStats(stats);
+    } catch (error) {
+      console.error("Error stopping route:", error);
     }
-  }, [routeStarted, routeId, routeDistance]);
+  };
+
+  // Show the mileage modal when the route is stopped
+  useEffect(() => {
+    if (!routeStarted && routeId) {
+      setShowMileageModal(true);
+    }
+  }, [routeStarted, routeId]);
 
   // Update the route
   useEffect(() => {
@@ -172,7 +187,64 @@ const RouteManager = ({
     };
   }, [routeStarted]);
 
-  return null; // This component handles logic only
+  return (
+    <>
+      {/* Mileage Entry Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showMileageModal}
+        onRequestClose={() => setShowMileageModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>Enter Additional Mileage</Text>
+            <Text style={styles.modalText}>(treadmill, bike, etc.)</Text>
+            <TextInput
+              style={styles.input}
+              keyboardType="decimal-pad"
+              placeholder="0.00"
+              value={enteredMileage}
+              onChangeText={setEnteredMileage}
+            />
+            <AppButton text="Finish Route" type="GREEN" onPress={stopRoute} />
+          </View>
+        </View>
+      </Modal>
+    </>
+  );
 };
+
+const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  modalContent: {
+    width: "80%",
+    backgroundColor: "white",
+    borderRadius: 10,
+    padding: 20,
+    alignItems: "center",
+  },
+  modalText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  input: {
+    width: "80%",
+    height: 40,
+    borderColor: "gray",
+    borderWidth: 1,
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 20,
+    textAlign: "center",
+  },
+});
 
 export default RouteManager;

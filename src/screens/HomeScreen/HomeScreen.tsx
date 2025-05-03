@@ -24,6 +24,10 @@ const HomeScreen = (props) => {
   const [routeId, setRouteId] = useState<number | null>(null);
   const [routeDistance, setRouteDistance] = useState(0.0);
 
+  // New state variables for the mileage entry modal
+  const [showMileageModal, setShowMileageModal] = useState(false);
+  const [enteredMileage, setEnteredMileage] = useState("");
+
   const handleRouteStart = () => {
     props.setRouteStarted(!props.routeStarted);
     if (!props.routeStarted) {
