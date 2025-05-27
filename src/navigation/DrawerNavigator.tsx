@@ -14,8 +14,6 @@ import { useState } from "react";
 const Drawer = createDrawerNavigator();
 
 const DrawerNavigator = (props) => {
-  const [stats, setStats] = useState(null); // Shared stats state
-
   return (
     <Drawer.Navigator
       screenOptions={({ navigation }) => ({
@@ -43,7 +41,9 @@ const DrawerNavigator = (props) => {
             setPrayerCount={props.setPrayerCount}
             routeStarted={props.routeStarted}
             setRouteStarted={props.setRouteStarted}
-            setStats={setStats} // Pass setStats to HomeScreen
+            setStats={props.setStats}
+            routeId={props.routeId}
+            setRouteId={props.setRouteId}
           />
         )}
       />
@@ -52,8 +52,9 @@ const DrawerNavigator = (props) => {
         options={{ title: "My Stats", headerTitle: "" }}
         children={({ navigation }) => (
           <StatsScreen
-            stats={stats}
-            setStats={setStats}
+            stats={props.stats}
+            setStats={props.setStats}
+            navigation={navigation}
             goToHome={props.goToHome} // Use the goToHome callback
           />
         )}
@@ -63,8 +64,8 @@ const DrawerNavigator = (props) => {
         options={{ title: "My Commitment", headerTitle: "" }}
         children={() => (
           <CommitmentScreen
-            stats={stats}
-            setStats={setStats}
+            stats={props.stats}
+            setStats={props.setStats}
             goToHome={props.goToHome}
           />
         )}

@@ -56,6 +56,7 @@ const StatsScreen = ({ stats, setStats, navigation }) => {
     total_distance,
     total_duration,
     total_prayers,
+    commitment_end_date,
   } = stats;
 
   const adjustedCommitmentDistance = commitment_distance / 100;
@@ -92,7 +93,9 @@ const StatsScreen = ({ stats, setStats, navigation }) => {
           <Text style={styles.sectionTitle}>Commitment Stats</Text>
           <Text style={styles.journeyTitle}>{current_journey.title}</Text>
           <Progress.Bar
-            progress={adjustedCommitmentDistance / current_journey.annual_miles}
+            progress={
+              adjustedCommitmentDistance / (current_journey.annual_miles / 100)
+            }
             width={null}
             height={10}
             color="#4caf50"
@@ -102,12 +105,18 @@ const StatsScreen = ({ stats, setStats, navigation }) => {
           />
           <Text style={styles.progressText}>
             {adjustedCommitmentDistance.toFixed(2)} miles of{" "}
-            {current_journey.annual_miles} miles
+            {(current_journey.annual_miles / 100).toFixed(2)} miles
           </Text>
           <Text style={styles.statText}>
             Duration: {formattedCommitmentDuration}
           </Text>
           <Text style={styles.statText}>Prayers: {commitment_prayers}</Text>
+          {commitment_end_date && (
+            <Text style={styles.commitmentEndDate}>
+              Commitment Ends:{" "}
+              {new Date(commitment_end_date).toLocaleDateString()}
+            </Text>
+          )}
         </View>
       ) : (
         <View style={styles.section}>
@@ -217,6 +226,13 @@ const styles = StyleSheet.create({
     color: "#ffffff",
     fontSize: 18,
     fontWeight: "bold",
+    lineHeight: 28,
+  },
+  commitmentEndDate: {
+    fontWeight: "600",
+    color: "red",
+    fontSize: 18,
+    marginBottom: 5,
     lineHeight: 28,
   },
 });

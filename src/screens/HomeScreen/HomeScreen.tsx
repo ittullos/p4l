@@ -21,7 +21,6 @@ const HomeScreen = (props) => {
   const [loading, setLoading] = useState(true);
   const [timer, setTimer] = useState(0);
   const [startTime, setStartTime] = useState(0);
-  const [routeId, setRouteId] = useState<number | null>(null);
   const [routeDistance, setRouteDistance] = useState(0.0);
 
   // New state variables for the mileage entry modal
@@ -98,10 +97,14 @@ const HomeScreen = (props) => {
     prepare();
   }, []);
 
+  useEffect(() => {
+    if (fontsLoaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded]);
+
   if (!fontsLoaded) {
-    return undefined;
-  } else {
-    SplashScreen.hideAsync();
+    return null; // Don't render anything until fonts are loaded
   }
 
   return (
@@ -109,11 +112,12 @@ const HomeScreen = (props) => {
       <RouteManager
         routeStarted={props.routeStarted}
         setRouteStarted={props.setRouteStarted}
-        routeId={routeId}
-        setRouteId={setRouteId}
+        routeId={props.routeId}
+        setRouteId={props.setRouteId}
         routeDistance={routeDistance}
         setRouteDistance={setRouteDistance}
         setStats={props.setStats}
+        setPrayerCount={props.setPrayerCount}
       />
       <View style={styles.verseContainer}>
         <Text style={styles.verseTitle}>Verse of the Day</Text>

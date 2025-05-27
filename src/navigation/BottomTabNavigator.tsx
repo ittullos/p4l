@@ -17,6 +17,8 @@ const BottomTabNavigator = () => {
   const [prayerName, setPrayerName] = useState<string>("");
   const [residentId, setResidentId] = useState<number | null>(null);
   const [routeStarted, setRouteStarted] = useState<boolean>(false);
+  const [routeId, setRouteId] = useState<number | null>(null);
+  const [stats, setStats] = useState(null);
 
   // Track whether the user is already in the "Home" section
   const [isInHome, setIsInHome] = useState<boolean>(false);
@@ -102,6 +104,10 @@ const BottomTabNavigator = () => {
             residentId={residentId}
             setResidentId={setResidentId}
             goToHome={() => goToHome(navigation)}
+            stats={stats}
+            setStats={setStats}
+            routeId={routeId}
+            setRouteId={setRouteId}
           />
         )}
       />
@@ -116,11 +122,13 @@ const BottomTabNavigator = () => {
             routeStarted={routeStarted}
             residentId={residentId}
             setResidentId={setResidentId}
+            stats={stats}
+            setStats={setStats}
+            routeId={routeId}
           />
         )}
       />
     </Tab.Navigator>
-    // </RouteContext.Provider>
   );
 };
 

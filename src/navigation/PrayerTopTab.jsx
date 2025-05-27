@@ -32,6 +32,8 @@ const PrayerTopTab = (props) => {
             routeStarted={props.routeStarted}
             residentId={props.residentId}
             setResidentId={props.setResidentId}
+            setStats={props.setStats}
+            routeId={props.routeId}
           />
         )}
       />

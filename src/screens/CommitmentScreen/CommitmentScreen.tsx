@@ -122,6 +122,11 @@ const CommitmentScreen = ({ stats, setStats }) => {
     fetchData();
   }, []);
 
+  const formatMiles = (value: number) => {
+    const miles = value / 100;
+    return parseFloat(miles.toString());
+  };
+
   return (
     <ScrollView>
       <View style={styles.container}>
@@ -150,15 +155,15 @@ const CommitmentScreen = ({ stats, setStats }) => {
             />
             <View style={styles.journeyTextContainer}>
               <Text style={styles.journeyTitle}>{journey.title}</Text>
-              <Text
-                style={styles.journeyAnnualMiles}
-              >{`  - ${journey.annual_miles} miles`}</Text>
-              <Text
-                style={styles.journeyText}
-              >{`      - ${journey.monthly_miles} mi/month`}</Text>
-              <Text
-                style={styles.journeyText}
-              >{`      - ${journey.weekly_miles} mi/week`}</Text>
+              <Text style={styles.journeyAnnualMiles}>
+                {`  - ${formatMiles(journey.annual_miles)} miles`}
+              </Text>
+              <Text style={styles.journeyText}>
+                {`      - ${formatMiles(journey.monthly_miles)} mi/month`}
+              </Text>
+              <Text style={styles.journeyText}>
+                {`      - ${formatMiles(journey.weekly_miles)} mi/week`}
+              </Text>
             </View>
           </View>
         ))}

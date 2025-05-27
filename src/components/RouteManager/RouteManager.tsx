@@ -14,12 +14,16 @@ const RouteManager = ({
   routeDistance,
   setRouteDistance,
   setStats,
+  setPrayerCount,
 }) => {
   const routeStartTime = useRef<number | null>(null); // Store the route start time
 
   // State for mileage entry modal
   const [showMileageModal, setShowMileageModal] = useState(false);
   const [enteredMileage, setEnteredMileage] = useState("0.00");
+
+  // State for commitment completion modal
+  const [showCommitmentModal, setShowCommitmentModal] = useState(false);
 
   // Start the route
   useEffect(() => {
@@ -78,7 +82,7 @@ const RouteManager = ({
       const response = await axios.patch(
         `${CONFIG.SERVER_URL}/user/routes`,
         {
-          mileage: Math.round(totalMileage * 100), // Convert to integer (e.g., 1.23 -> 123)
+          mileage: Math.round(totalMileage * 100),
           id: routeId,
           stop: true,
         },
@@ -93,12 +97,18 @@ const RouteManager = ({
 
       console.log("Route stopped successfully:", response.data.data);
 
+      // Check if the commitment is completed
+      if (response.data.data.meta.commitment.completed) {
+        setShowCommitmentModal(true);
+      }
+
       // Reset state after stopping the route
       setRouteId(null);
       setRouteDistance(0.0);
       routeStartTime.current = null; // Reset the start time
-      setEnteredMileage("");
+      setEnteredMileage("0.00");
       setShowMileageModal(false);
+      setPrayerCount && setPrayerCount(0);
 
       // Fetch updated stats
       const stats = await fetchStats();
@@ -208,6 +218,28 @@ const RouteManager = ({
               onChangeText={setEnteredMileage}
             />
             <AppButton text="Finish Route" type="GREEN" onPress={stopRoute} />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Commitment Completion Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showCommitmentModal}
+        onRequestClose={() => setShowCommitmentModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalText}>
+              Congratulations! You've completed your commitment. We've selected
+              the next commitment for you. Keep at it!
+            </Text>
+            <AppButton
+              text="Close"
+              type="GREEN"
+              onPress={() => setShowCommitmentModal(false)}
+            />
           </View>
         </View>
       </Modal>
