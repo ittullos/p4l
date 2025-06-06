@@ -20,7 +20,7 @@ const RouteManager = ({
 
   // State for mileage entry modal
   const [showMileageModal, setShowMileageModal] = useState(false);
-  const [enteredMileage, setEnteredMileage] = useState("0.00");
+  const [enteredMileage, setEnteredMileage] = useState("");
 
   // State for commitment completion modal
   const [showCommitmentModal, setShowCommitmentModal] = useState(false);
@@ -65,7 +65,9 @@ const RouteManager = ({
   const stopRoute = async () => {
     console.log("Stopping route...");
     try {
-      const mileageToAdd = parseFloat(enteredMileage);
+      const mileageToAdd = parseFloat(
+        enteredMileage.trim() === "" ? "0" : enteredMileage
+      );
       if (isNaN(mileageToAdd) || mileageToAdd < 0) {
         alert("Please enter a valid mileage.");
         return;
@@ -106,7 +108,7 @@ const RouteManager = ({
       setRouteId(null);
       setRouteDistance(0.0);
       routeStartTime.current = null; // Reset the start time
-      setEnteredMileage("0.00");
+      setEnteredMileage("");
       setShowMileageModal(false);
       setPrayerCount && setPrayerCount(0);
 

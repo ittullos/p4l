@@ -16,5 +16,23 @@
         "Pastor4Life": {}
       }
     }
+  },
+  "production": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-pastor4life-production-091a1-authRole",
+      "UnauthRoleArn": "arn:aws:iam::826335059257:role/amplify-pastor4life-production-091a1-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::826335059257:role/amplify-pastor4life-production-091a1-authRole",
+      "Region": "us-east-1",
+      "DeploymentBucketName": "amplify-pastor4life-production-091a1-deployment",
+      "UnauthRoleName": "amplify-pastor4life-production-091a1-unauthRole",
+      "StackName": "amplify-pastor4life-production-091a1",
+      "StackId": "arn:aws:cloudformation:us-east-1:826335059257:stack/amplify-pastor4life-production-091a1/cbcfd430-3b46-11f0-9f17-0e85ae4ded3b",
+      "AmplifyAppId": "d27ea9wt4fnqi4"
+    },
+    "categories": {
+      "auth": {
+        "Pastor4Life": {}
+      }
+    }
   }
 }

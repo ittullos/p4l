@@ -54,8 +54,6 @@ const SignInScreen = () => {
       // Debug logs to verify token storage
       console.log("Access Token:", accessToken);
       console.log("ID Token:", idToken);
-
-      Alert.alert("Success", "You are signed in!");
     } catch (e) {
       Alert.alert("Oops", e.message);
     }
