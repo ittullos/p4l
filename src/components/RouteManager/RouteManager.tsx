@@ -5,6 +5,20 @@ import axios from "axios";
 import CONFIG from "../../config/config";
 import { fetchStats } from "../../utils/fetchStats";
 import AppButton from "../AppButton";
+import AppleHealthKit, { HealthKitPermissions } from "react-native-health";
+import { Platform } from "react-native";
+
+const permissions: HealthKitPermissions = {
+  permissions: {
+    read: [
+      AppleHealthKit.Constants.Permissions.DistanceWalkingRunning,
+      AppleHealthKit.Constants.Permissions.StepCount,
+      AppleHealthKit.Constants.Permissions.DistanceCycling,
+      AppleHealthKit.Constants.Permissions.Workout,
+    ],
+    write: [],
+  },
+};
 
 const RouteManager = ({
   routeStarted,
@@ -24,6 +38,20 @@ const RouteManager = ({
 
   // State for commitment completion modal
   const [showCommitmentModal, setShowCommitmentModal] = useState(false);
+
+  const [hasPermissions, setHasPermissions] = useState(false);
+  const [healthStartDate, setHealthStartDate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    AppleHealthKit.initHealthKit(permissions, (err) => {
+      if (err) {
+        console.error("Error initializing HealthKit:", err);
+        return;
+      }
+      console.log("HealthKit initialized successfully");
+      setHasPermissions(true);
+    });
+  }, []);
 
   // Start the route
   useEffect(() => {
@@ -51,6 +79,7 @@ const RouteManager = ({
         console.log("Route started successfully:", response.data.data);
         setRouteId(response.data.data.id);
         routeStartTime.current = Date.now(); // Record the start time of the route
+        setHealthStartDate(new Date());
       } catch (error) {
         console.error("Error starting route:", error);
       }
@@ -108,6 +137,7 @@ const RouteManager = ({
       setRouteId(null);
       setRouteDistance(0.0);
       routeStartTime.current = null; // Reset the start time
+      setHealthStartDate(null);
       setEnteredMileage("");
       setShowMileageModal(false);
       setPrayerCount && setPrayerCount(0);
@@ -183,13 +213,31 @@ const RouteManager = ({
   useEffect(() => {
     let distanceInterval;
 
-    if (routeStarted) {
+    if (routeStarted && healthStartDate) {
       console.log("Starting distance interval...");
       distanceInterval = setInterval(() => {
-        const randomIncrement = (Math.random() * (3 - 1) + 1).toFixed(2);
-        setRouteDistance((prevDistance) =>
-          parseFloat((prevDistance + parseFloat(randomIncrement)).toFixed(2))
-        );
+        console.log("HealthKit interval running...");
+        const options = {
+          startDate: healthStartDate.toISOString(),
+          endDate: new Date().toISOString(),
+          type: "DistanceWalkingRunning",
+          unit: "meter", // Optional, defaults to meters
+        };
+        AppleHealthKit.getSamples(options, (err, results) => {
+          if (err) {
+            console.error("Error fetching HealthKit samples:", err);
+            return;
+          }
+          console.log("HealthKit samples:", results);
+          // Sum up the distances from all samples
+          const totalDistanceMeters = results.reduce(
+            (sum, sample) => sum + (sample.quantity || 0),
+            0
+          );
+          // Convert to miles (1 mile = 1609.34 meters)
+          const totalDistanceMiles = totalDistanceMeters / 1609.34;
+          setRouteDistance(parseFloat(totalDistanceMiles.toFixed(2)));
+        });
       }, 10000);
     }
 
@@ -197,7 +245,7 @@ const RouteManager = ({
       console.log("Clearing distance interval...");
       clearInterval(distanceInterval);
     };
-  }, [routeStarted]);
+  }, [routeStarted, healthStartDate]);
 
   return (
     <>
